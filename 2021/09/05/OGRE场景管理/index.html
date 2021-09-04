@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="SceneManager本身是场景图接口，通过其调用OGRE本身提供的几个不同的场景图算法，适应不同的场景类型. SceneManager* sceneMgr &#x3D; Root::getSingleTon::createSceneManager(类型，名称) 不同类型优化不同的场景，如室内近距离、室外中近距离、动态加载的大场景等等 场景管理器创建时，会提供一个根节点用于挂接其它节点，节点可以是空的，但">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OGRE场景管理">
+<meta property="og:url" content="http://example.com/2021/09/05/OGRE%E5%9C%BA%E6%99%AF%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="Hi">
+<meta property="og:description" content="SceneManager本身是场景图接口，通过其调用OGRE本身提供的几个不同的场景图算法，适应不同的场景类型. SceneManager* sceneMgr &#x3D; Root::getSingleTon::createSceneManager(类型，名称) 不同类型优化不同的场景，如室内近距离、室外中近距离、动态加载的大场景等等 场景管理器创建时，会提供一个根节点用于挂接其它节点，节点可以是空的，但">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="c:/Users/32125/AppData/Roaming/Typora/typora-user-images/image-20210905012550219.png">
+<meta property="article:published_time" content="2021-09-04T16:12:07.000Z">
+<meta property="article:modified_time" content="2021-09-04T17:27:30.145Z">
+<meta property="article:author" content="吴恩雄">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="c:/Users/32125/AppData/Roaming/Typora/typora-user-images/image-20210905012550219.png">
+
+<link rel="canonical" href="http://example.com/2021/09/05/OGRE%E5%9C%BA%E6%99%AF%E7%AE%A1%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>OGRE场景管理 | Hi</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hi</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/09/05/OGRE%E5%9C%BA%E6%99%AF%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="吴恩雄">
+      <meta itemprop="description" content="不要看得太远">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hi">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OGRE场景管理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-05 00:12:07 / 修改时间：01:27:30" itemprop="dateCreated datePublished" datetime="2021-09-05T00:12:07+08:00">2021-09-05</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>SceneManager本身是场景图接口，通过其调用OGRE本身提供的几个不同的场景图算法，适应不同的场景类型.</p>
+<p>SceneManager* sceneMgr = Root::getSingleTon::createSceneManager(类型，名称)</p>
+<p>不同类型优化不同的场景，如室内近距离、室外中近距离、动态加载的大场景等等</p>
+<p>场景管理器创建时，会提供一个根节点用于挂接其它节点，节点可以是空的，但是实体要挂接在节点上，节点有位置信息和变换矩阵</p>
+<p>场景中的物体不管是否渲染都会交给场景管理器管理（创建、获得、销毁）.好处就是可优化</p>
+<p>渲染时最后要拿到SceneNode上的Renderable对象，那这些对象是哪里来的？</p>
+<p>1、往节点上挂接物体可以手动，</p>
+<p>调用SceneNode的createNode，创建指定节点的子节点，然后把实体绑定上去</p>
+<p>2、可以通过资源管理器载入</p>
+<p><img src="C:\Users\32125\AppData\Roaming\Typora\typora-user-images\image-20210905012550219.png" alt="image-20210905012550219"></p>
+<p>节点除了有渲染对象外，还有用于帮助场景图进行渲染的对象，如Camera和Light，一般情况下不被渲染</p>
+<p>Camera是作为节点放置到场景树中的，在给RenderTarget添加viewPort时会绑定一个Camera,从而将照相机视见体内的物体送去渲染.这也决定了摄像机可以不（当然也可以）挂接在节点上而放置在场景中，创建后便可工作，默认配置在世界坐标的（0，0，0）</p>
+<p>而Light有时会被绑定到某些节点上制造一些特殊效果，如车灯</p>
+<p>OGRE使用场景树来组织场景，每个节点是由Node派生来的SceneNode构成的，而可移动对象MovableObject的各种派生类是通过节点的attachObject（）函数挂载到各个SceneNode维护的可移动对像的一个Map. SceneNode上还管理着其他一些不可移动的对象，如Camera、Light等.这些所有的对象都由SceneManager来创建管理销毁.</p>
+<p>作用：</p>
+<p>1、负责场景对象的创建(可移动或者不可移动)</p>
+<p>Camera、Light、SceneNode、Entity、skyRender等</p>
+<p>MovableObject的挂载</p>
+<p>这部分有一大批的createXXX、getXXX、hasXXX、destroyXXX</p>
+<p>场景中的任何东西都由场景管理器来管理.任何通过场景管理器得到的东西，都必须由场景管理器来销毁.</p>
+<p>2、场景查询</p>
+<p>OGRE场景查询分三种：相交查询、射线查询、区域查询</p>
+<p>查询的结果分为两种，一种是可移动对象，一种是关卡的一部分(world geometry)</p>
+<p>OGRE有一个专门的类负责这些查询  SceneQuery（没有展开讲，内容有点多）,包装了场景管理器的查询接口</p>
+<p>相交查询和射线查询主要是查询两两相交的可移动对像，以及可移动对象的关卡子部分</p>
+<p>区域查询，是设定一个区域，如AABB区域或者球形区域或者由多面体组成的区域，查询在该区域中的可移动对象</p>
+<p>这些查询都是用掩码的，可以在查询时过滤掉一些不关心的对象类型</p>
+<p>因为涉及场景管理部分涉及到的到的大多是实体类，分析属性成员没有多大意义，涉及的成员函数大多都是设置或者获取属性值，了解其实如何组织与交互的即可</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/05/OGRE%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B/" rel="prev" title="OGRE渲染流程">
+      <i class="fa fa-chevron-left"></i> OGRE渲染流程
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">吴恩雄</p>
+  <div class="site-description" itemprop="description">不要看得太远</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴恩雄</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
